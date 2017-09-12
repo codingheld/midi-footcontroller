@@ -109,6 +109,18 @@ int program = 0;
 bool fx = true;
 char charPatch[5] = "ABCDE";
 
+const int led1 = 36;
+const int led2 = 34; //Aaaaachtung!
+const int led3 = 38;
+const int led4 = 40;
+const int led5 = 42;
+const int led6 = 44;
+const int led7 = 46;
+const int led8 = 48;
+const int led9 = 50;
+const int led10 = 52;
+
+
 //MIDI_CREATE_DEFAULT_INSTANCE();
 
 void setup() {
@@ -126,11 +138,33 @@ void setup() {
   pinMode(51, INPUT_PULLUP);
   pinMode(53, INPUT_PULLUP);
 
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  pinMode(led3, OUTPUT);
+  pinMode(led4, OUTPUT);
+  pinMode(led5, OUTPUT);
+  pinMode(led6, OUTPUT);
+  pinMode(led7, OUTPUT);
+  pinMode(led8, OUTPUT);
+  pinMode(led9, OUTPUT);
+  pinMode(led10, OUTPUT);
+
   Serial.println("Hallo, i bims de Footkontrolleur!");
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
   display.clearDisplay();
   display.drawBitmap(0, 0,  logo, 128, 64, 1);
   display.display();
+  ledInit();
+  /*digitalWrite(led1, HIGH);
+  digitalWrite(led2, HIGH);
+  digitalWrite(led3, HIGH);
+  digitalWrite(led4, HIGH);
+  digitalWrite(led5, HIGH);
+  digitalWrite(led6, HIGH);
+  digitalWrite(led7, HIGH);
+  digitalWrite(led8, HIGH);
+  digitalWrite(led9, HIGH);
+  digitalWrite(led10, HIGH);*/
   delay(5000);
   calculateProgramChange();
 }
@@ -179,8 +213,11 @@ void loop() {
     Serial.println("10");
   }*/
 
-  
+ if (button1.risingEdge()) {
+    digitalWrite(led10, LOW);
+ } 
  if (button1.fallingEdge()) {
+    digitalWrite(led10, HIGH);
     if (bank < 24) {
       bank++;
     }
@@ -270,4 +307,42 @@ void drawDisplay(int level, int bank, char patch, bool fx) {
   display.fillRect(5, 64-height, 15, height, WHITE);
   display.display();
 }
+
+void ledInit() {
+  int delayTime = 100;
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(led1, HIGH);
+    delay(delayTime);
+    digitalWrite(led1, LOW);
+    digitalWrite(led2, HIGH);
+    delay(delayTime);
+    digitalWrite(led1, LOW);
+    digitalWrite(led3, HIGH);
+    delay(delayTime);
+    digitalWrite(led3, LOW);
+    digitalWrite(led4, HIGH);
+    delay(delayTime);
+    digitalWrite(led4, LOW);
+    digitalWrite(led5, HIGH);
+    delay(delayTime);
+    digitalWrite(led5, LOW);
+    digitalWrite(led6, HIGH);
+    delay(delayTime);
+    digitalWrite(led6, LOW);
+    digitalWrite(led7, HIGH);
+    delay(delayTime);
+    digitalWrite(led7, LOW);
+    digitalWrite(led8, HIGH);
+    delay(delayTime);
+    digitalWrite(led8, LOW);
+    digitalWrite(led9, HIGH);
+    delay(delayTime);
+    digitalWrite(led9, LOW);
+    digitalWrite(led10, HIGH);
+    delay(delayTime);
+    digitalWrite(led10, LOW);
+    delay(delayTime);
+  }
+}
+
 
