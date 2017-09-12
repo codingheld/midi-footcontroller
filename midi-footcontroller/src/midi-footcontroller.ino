@@ -1,13 +1,13 @@
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_GFX.h>
-#include <gfxfont.h>
-
 //  Arduino Footcontroller for Behringer V-Amp Pro
 //
 //  Created by Florian Spies
 //  Copyright (c) 2017 Florian Spies. All rights reserved.
 //
 
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_GFX.h>
+#include <gfxfont.h>
+#include <Wire.h>
 #include <MIDI.h>
 #include <Bounce2.h>
 
@@ -181,7 +181,7 @@ void loop() {
   button9.update();
   button10.update();
 
- 
+
   /*if (button1.fallingEdge()) {
     Serial.println("1");
   }
@@ -215,7 +215,7 @@ void loop() {
 
  if (button1.risingEdge()) {
     digitalWrite(led10, LOW);
- } 
+ }
  if (button1.fallingEdge()) {
     digitalWrite(led10, HIGH);
     if (bank < 24) {
@@ -223,44 +223,44 @@ void loop() {
     }
     calculateProgramChange();
  }
- 
+
  if (button2.fallingEdge()) {
   if (bank > 0) {
-    bank--; 
+    bank--;
   }
   calculateProgramChange();
  }
- 
+
  if (button3.fallingEdge()) {
   patch = 0;
   calculateProgramChange();
  }
- 
+
  if (button4.fallingEdge()) {
   patch = 1;
   calculateProgramChange();
  }
- 
+
  if (button5.fallingEdge()) {
   patch = 2;
   calculateProgramChange();
  }
- 
+
  if (button6.fallingEdge()) {
   patch = 3;
   calculateProgramChange();
  }
- 
+
  if (button7.fallingEdge()) {
   patch = 4;
   calculateProgramChange();
  }
- 
+
  if (button8.fallingEdge()) {
   fx = !fx;
   calculateProgramChange();
  }
- 
+
  if (button9.fallingEdge()) {
   Serial.println("Tuner");
  }
@@ -275,14 +275,14 @@ void calculateProgramChange() {
   Serial.print("Bank ");
   Serial.print(bank + 1);
   Serial.print(" Patch ");
-  Serial.println(charPatch[patch]); 
+  Serial.println(charPatch[patch]);
   Serial.print("PC ");
   Serial.println(program);
   drawDisplay(50, bank+1,charPatch[patch],fx);
-  
+
 }
 void drawDisplay(int level, int bank, char patch, bool fx) {
-  display.clearDisplay();  
+  display.clearDisplay();
 
   display.setCursor(20,20);
   display.setTextSize(6);
@@ -292,16 +292,16 @@ void drawDisplay(int level, int bank, char patch, bool fx) {
   }
   display.print(bank);
   display.print(patch);
-  
+
   display.setCursor(100,0);
   display.setTextSize(2);
-  
+
   if (fx) {
     display.setTextColor(BLACK, WHITE);
   }
-  
+
   display.print("FX");
-  
+
   int height = map(level, 0, 127, 0, 64);
   display.drawRect(5, 0, 15, 64, WHITE);
   display.fillRect(5, 64-height, 15, height, WHITE);
@@ -344,5 +344,3 @@ void ledInit() {
     delay(delayTime);
   }
 }
-
-
