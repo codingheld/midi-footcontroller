@@ -1,19 +1,15 @@
 #include <Adafruit_SSD1306.h>
-#include <Adafruit_GFX.h>
-#include <gfxfont.h>
-
 //  Arduino Footcontroller for Behringer V-Amp Pro
 //
 //  Created by Florian Spies
 //  Copyright (c) 2017 Florian Spies. All rights reserved.
 //
-
+#include <Adafruit_GFX.h>
+#include <gfxfont.h>
 #include <MIDI.h>
 #include <Bounce2.h>
-
 #define OLED_RESET 4
 Adafruit_SSD1306 display(OLED_RESET);
-
 #define NUMFLAKES 10
 #define XPOS 0
 #define YPOS 1
@@ -92,40 +88,47 @@ static const unsigned char PROGMEM logo[] =
 #error("Height incorrect, please fix Adafruit_SSD1306.h!");
 #endif
 
-Bounce button1 = Bounce(35, 10);
-Bounce button2 = Bounce(37, 10);
-Bounce button3 = Bounce(39, 10);
-Bounce button4 = Bounce(41, 10);
-Bounce button5 = Bounce(43, 10);
-Bounce button6 = Bounce(45, 10);
-Bounce button7 = Bounce(47, 10);
-Bounce button8 = Bounce(49, 10);
-Bounce button9 = Bounce(51, 10);
-Bounce button10 = Bounce(53, 10);
+Bounce buttonA = Bounce(35, 10);
+Bounce buttonB = Bounce(37, 10);
+Bounce buttonC = Bounce(39, 10);
+Bounce buttonFX1 = Bounce(41, 10);
+Bounce buttonDown = Bounce(43, 10);
+Bounce buttonUp = Bounce(45, 10);
+Bounce buttonFX2 = Bounce(47, 10);
+Bounce buttonTuner = Bounce(49, 10);
+Bounce buttonE = Bounce(51, 10);
+Bounce buttonD = Bounce(53, 10);
 
 int bank = 0;
 int patch = 0;
 int program = 0;
+int volume = 0;
+int expression = 0;
+
 bool fx = true;
+bool fx2 = true;
+bool tuner = false;
+
+bool changed = true;
+
 char charPatch[5] = "ABCDE";
 
-const int led1 = 36;
-const int led2 = 34; //Aaaaachtung!
-const int led3 = 38;
-const int led4 = 40;
-const int led5 = 42;
-const int led6 = 44;
-const int led7 = 46;
-const int led8 = 48;
-const int led9 = 50;
-const int led10 = 52;
-
+const int ledD = 36;
+const int ledE = 34; //Aaaaachtung!
+const int ledTuner = 38;
+const int ledFX2 = 40;
+const int ledUp = 42;
+const int ledDown = 44;
+const int ledFX1 = 46;
+const int ledC = 48;
+const int ledB = 50;
+const int ledA = 52;
 
 //MIDI_CREATE_DEFAULT_INSTANCE();
-
+ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 void setup() {
   Serial.begin(9600);
-  //MIDI.begin(MIDI_CHANNEL_OFF);
+  MIDI.begin(MIDI_CHANNEL_OFF);
 
   pinMode(35, INPUT_PULLUP);
   pinMode(37, INPUT_PULLUP);
@@ -138,140 +141,136 @@ void setup() {
   pinMode(51, INPUT_PULLUP);
   pinMode(53, INPUT_PULLUP);
 
-  pinMode(led1, OUTPUT);
-  pinMode(led2, OUTPUT);
-  pinMode(led3, OUTPUT);
-  pinMode(led4, OUTPUT);
-  pinMode(led5, OUTPUT);
-  pinMode(led6, OUTPUT);
-  pinMode(led7, OUTPUT);
-  pinMode(led8, OUTPUT);
-  pinMode(led9, OUTPUT);
-  pinMode(led10, OUTPUT);
+  pinMode(ledD, OUTPUT);
+  pinMode(ledE, OUTPUT);
+  pinMode(ledTuner, OUTPUT);
+  pinMode(ledFX2, OUTPUT);
+  pinMode(ledUp, OUTPUT);
+  pinMode(ledDown, OUTPUT);
+  pinMode(ledFX1, OUTPUT);
+  pinMode(ledC, OUTPUT);
+  pinMode(ledB, OUTPUT);
+  pinMode(ledA, OUTPUT);
 
   Serial.println("Hallo, i bims de Footkontrolleur!");
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
   display.clearDisplay();
   display.drawBitmap(0, 0,  logo, 128, 64, 1);
   display.display();
-  ledInit();
-  /*digitalWrite(led1, HIGH);
-  digitalWrite(led2, HIGH);
-  digitalWrite(led3, HIGH);
-  digitalWrite(led4, HIGH);
-  digitalWrite(led5, HIGH);
-  digitalWrite(led6, HIGH);
-  digitalWrite(led7, HIGH);
-  digitalWrite(led8, HIGH);
-  digitalWrite(led9, HIGH);
-  digitalWrite(led10, HIGH);*/
-  delay(5000);
-  calculateProgramChange();
+  ledInit();  
 }
 
 void loop() {
-  button1.update();
-  button2.update();
-  button3.update();
-  button4.update();
-  button5.update();
-  button6.update();
-  button7.update();
-  button8.update();
-  button9.update();
-  button10.update();
+  updateButtonStates();
+  processButtonStates();
+  if (changed) {
+    updateLEDStates();
+    calculateProgramChange();
+    changed = false;
+  } 
+}
 
- 
-  /*if (button1.fallingEdge()) {
-    Serial.println("1");
-  }
-  if (button2.fallingEdge()) {
-    Serial.println("2");
-  }
-  if (button3.fallingEdge()) {
-    Serial.println("3");
-  }
-  if (button4.fallingEdge()) {
-    Serial.println("4");
-  }
-  if (button5.fallingEdge()) {
-    Serial.println("5");
-  }
-  if (button6.fallingEdge()) {
-    Serial.println("6");
-  }
-  if (button7.fallingEdge()) {
-    Serial.println("7");
-  }
-  if (button8.fallingEdge()) {
-    Serial.println("8");
-  }
-  if (button9.fallingEdge()) {
-    Serial.println("9");
-  }
-  if (button10.fallingEdge()) {
-    Serial.println("10");
-  }*/
+void updateButtonStates() {
+  buttonA.update();
+  buttonB.update();
+  buttonC.update();
+  buttonD.update();
+  buttonE.update();
+  buttonUp.update();
+  buttonDown.update();
+  
+  buttonFX1.update();  
+  buttonFX2.update();
+  
+  buttonTuner.update(); 
+}
 
- if (button1.risingEdge()) {
-    digitalWrite(led10, LOW);
+void processButtonStates() {
+  
+ if (buttonUp.risingEdge()) {
+    digitalWrite(ledUp, LOW);
  } 
- if (button1.fallingEdge()) {
-    digitalWrite(led10, HIGH);
+ if (buttonUp.fallingEdge()) {
+    digitalWrite(ledUp, HIGH);
     if (bank < 24) {
       bank++;
     }
-    calculateProgramChange();
+    changed = true;
+ }
+
+ if (buttonDown.risingEdge()) {
+    digitalWrite(ledDown, LOW);
+ } 
+ if (buttonDown.fallingEdge()) {
+    digitalWrite(ledDown, HIGH);
+    if (bank > 0) {
+      bank--;
+    }
+    changed = true;
  }
  
- if (button2.fallingEdge()) {
-  if (bank > 0) {
-    bank--; 
-  }
-  calculateProgramChange();
+ if (buttonA.fallingEdge() && buttonC.fallingEdge()) {
+  Serial.println("Radomms");
  }
- 
- if (button3.fallingEdge()) {
+ if (buttonA.fallingEdge()) {
   patch = 0;
-  calculateProgramChange();
+  changed = true;
  }
  
- if (button4.fallingEdge()) {
+ if (buttonB.fallingEdge()) {
   patch = 1;
-  calculateProgramChange();
+  changed = true;
  }
  
- if (button5.fallingEdge()) {
+ if (buttonC.fallingEdge()) {
   patch = 2;
-  calculateProgramChange();
+  changed = true;
  }
  
- if (button6.fallingEdge()) {
+ if (buttonD.fallingEdge()) {
   patch = 3;
-  calculateProgramChange();
+  changed = true;
  }
  
- if (button7.fallingEdge()) {
+ if (buttonE.fallingEdge()) {
   patch = 4;
-  calculateProgramChange();
+  changed = true;
  }
  
- if (button8.fallingEdge()) {
+ if (buttonFX1.fallingEdge()) {
   fx = !fx;
-  calculateProgramChange();
+  changed = true;
+ }
+ if (buttonFX2.fallingEdge()) {
+  fx2 = !fx2;
+  changed = true;
  }
  
- if (button9.fallingEdge()) {
-  Serial.println("Tuner");
+ if (buttonTuner.fallingEdge()) {
+    tuner = !tuner;
+    changed = true;
  }
- if (button10.fallingEdge()) {
-  Serial.println("Boom");
- }
+}
+
+void updateLEDStates() {
+  int leds[] = { ledA, ledB, ledC, ledD, ledE };
+  
+  digitalWrite(ledFX1, fx && !tuner ? HIGH : LOW);
+  digitalWrite(ledFX2, fx2 && !tuner ? HIGH : LOW);
+  digitalWrite(ledTuner, tuner ? HIGH : LOW);
+
+  for (int i = 0; i < 5; i++) {
+    if (i == patch && !tuner) {
+      digitalWrite(leds[i], HIGH);
+    } else {
+      digitalWrite(leds[i], LOW);
+    }
+  }
 }
 
 void calculateProgramChange() {
   program = 5 * bank + patch;
-  //MIDI.sendProgramChange(program,1);
+  MIDI.sendProgramChange(program,1);
   Serial.print("Bank ");
   Serial.print(bank + 1);
   Serial.print(" Patch ");
@@ -309,38 +308,17 @@ void drawDisplay(int level, int bank, char patch, bool fx) {
 }
 
 void ledInit() {
-  int delayTime = 100;
-  for (int i = 0; i < 5; i++) {
-    digitalWrite(led1, HIGH);
+  int delayTime = 50;
+  int leds[] = {ledD, ledE, ledTuner, ledFX2, ledUp, ledDown, ledC, ledB, ledA };
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(leds[0], HIGH);
     delay(delayTime);
-    digitalWrite(led1, LOW);
-    digitalWrite(led2, HIGH);
-    delay(delayTime);
-    digitalWrite(led1, LOW);
-    digitalWrite(led3, HIGH);
-    delay(delayTime);
-    digitalWrite(led3, LOW);
-    digitalWrite(led4, HIGH);
-    delay(delayTime);
-    digitalWrite(led4, LOW);
-    digitalWrite(led5, HIGH);
-    delay(delayTime);
-    digitalWrite(led5, LOW);
-    digitalWrite(led6, HIGH);
-    delay(delayTime);
-    digitalWrite(led6, LOW);
-    digitalWrite(led7, HIGH);
-    delay(delayTime);
-    digitalWrite(led7, LOW);
-    digitalWrite(led8, HIGH);
-    delay(delayTime);
-    digitalWrite(led8, LOW);
-    digitalWrite(led9, HIGH);
-    delay(delayTime);
-    digitalWrite(led9, LOW);
-    digitalWrite(led10, HIGH);
-    delay(delayTime);
-    digitalWrite(led10, LOW);
+    for (int ii = 1; ii < 10; ii++) {
+      digitalWrite(leds[ii-1], LOW);
+      digitalWrite(leds[ii], HIGH);
+      delay(delayTime);
+    }
+    digitalWrite(leds[9], LOW);
     delay(delayTime);
   }
 }
